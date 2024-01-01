@@ -1,0 +1,20 @@
+*.swp
+*.swn
+*.swo
+*.swm
+
+*.mp4
+*.png
+/data/videos
+/data/images
+/data/backup
+
+*.DS_Store
+*._*
+
+*.lprof
+
+.cache
+__pycache__
+/.idea
+ my_project.egg-info/
