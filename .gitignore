@@ -5,9 +5,7 @@
 
 *.mp4
 *.png
-/data/videos
-/data/images
-/data/backup
+
 
 *.DS_Store
 *._*
@@ -17,4 +15,4 @@
 .cache
 __pycache__
 /.idea
- my_project.egg-info/
+my_project.egg-info
