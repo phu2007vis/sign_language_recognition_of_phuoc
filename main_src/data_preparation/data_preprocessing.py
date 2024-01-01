@@ -8,12 +8,21 @@ _IMAGE_EXT = ['.jpg', '.png']
 _IMAGE_SIZE = 224
 
 
-def split(a, n):
+def split(a:list, n:int):
+    '''
+    a list : list of image frame
+    n int : number of approximately equal-sized chunks
+    
+    return a list of list image
+    '''
     k, m = divmod(len(a), n)
     return [a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in list(range(n))]
 
 
 def resize_img(img, short_size=256):
+    '''
+    resize image but keep the aspect ratio
+    '''
     h, w, c = img.shape
     if (w <= h and w == short_size) or (h <= w and h == short_size):
         return img
@@ -28,6 +37,9 @@ def resize_img(img, short_size=256):
 
 
 def video_loader(video_path, short_size):
+    '''
+    video_path: path to the video 
+    '''
     log("Start processing video:", video_path)
     video = []
     vidcap = cv2.VideoCapture(str(video_path))

@@ -4,4 +4,5 @@ torchvision
 pathlib2
 argparse
 numpy
+opencv-python
 -e .
