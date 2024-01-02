@@ -39,6 +39,12 @@ def resize_img(img, short_size=256):
 def video_loader(video_path, short_size):
     '''
     video_path: path to the video 
+    short_size: int 
+    
+    return 
+    video: list of image 
+    number frame: int
+    fps: int
     '''
     log("Start processing video:", video_path)
     video = []
@@ -73,6 +79,16 @@ def images_loader(images_path, transform=None):
 
 
 def sample_by_number(frame_num, out_frame_num, random_choice=False):
+    '''
+    get index of subframes from whole video frames
+    
+    frame_num: total number of origin frames 
+    out_frame_num: total number of subframes
+    random_choice: False choose first frame from a chunks else random take
+    
+    return list of index frames prepare to take
+    
+    '''
     full_frame_lists = split(list(range(frame_num - 1)), out_frame_num)
     if random_choice:
         return [random.choice(i) for i in full_frame_lists]
@@ -81,6 +97,16 @@ def sample_by_number(frame_num, out_frame_num, random_choice=False):
 
 
 def sample_by_fps(frame_num, in_fps, out_fps, random_choice=False):
+    '''
+    get index of subframes from whole video frames
+    
+    frame_num: total number of origin frames 
+    : total number of subframes
+    random_choice: False choose first frame from a chunks else random take
+    
+    return list of index frames prepare to take
+    
+    '''
     if in_fps is not None:
         out_frame_num = int(frame_num * out_fps / in_fps)
     full_frame_lists = split(list(range(frame_num - 1)), out_frame_num)

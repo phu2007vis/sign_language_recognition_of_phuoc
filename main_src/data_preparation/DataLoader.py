@@ -45,13 +45,13 @@ class SpacialTransform(Dataset):
         return torch.stack(image_PILs)
 
 
-class RGBFlowDataset(Dataset):
+class VideoFloderDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, root_dir, class_dict, sample_rate=1, sample_type="num", fps=5, out_frame_num=32, augment=False):
+    def __init__(self, root_dir, sample_rate=1, sample_type="num", fps=5, out_frame_num=32, augment=False):
         """
         Args:
-            root_dir (string): Directory with all the images.
+            root_dir (string): Directory with all the video.
         """
         self.root_dir = Path(root_dir)
         self.sub_dirs = [i for i in self.root_dir.iterdir() if i.is_dir() and not i.stem.startswith('.')]
@@ -59,29 +59,24 @@ class RGBFlowDataset(Dataset):
         self.data_pairs = []
         self.spacial_transform = SpacialTransform()
         self.temporal_transform = TemporalRandomCrop(out_frame_num)
-        # self.temporal_transform =
+        self.sample_type = sample_type
         for sub_dir in self.sub_dirs:
             item_dirs = [i for i in sub_dir.iterdir() if i.is_dir() and not i.stem.startswith('.')]
             for item_dir in item_dirs:
                 contents = [i for i in item_dir.iterdir() if i.is_file() and not i.stem.startswith('.')]
                 if contents:
-                    # print(contents, sample_rate)
                     try:
                         if sample_type == "num":
-                            temp_rgb = [i for i in contents if i.stem.startswith('rgb') and "SampleRate" in i.stem
-                                        and int(i.stem.split('_')[-1]) == sample_rate][0]
-                            temp_flow = [i for i in contents if i.stem.startswith('flow') and "SampleRate" in i.stem
-                                         and int(i.stem.split('_')[-1]) == sample_rate][0]
+                            temp_rgb = [i for i in contents if int(i.stem.split('_')[-1]) == sample_rate][0]
+                          
                         elif sample_type == "fps":
                             temp_rgb = [i for i in contents if i.stem.startswith('rgb') and "FPS" in i.stem
                                         and int(i.stem.split('_')[-1]) == fps][0]
-                            temp_flow = [i for i in contents if i.stem.startswith('flow') and "FPS" in i.stem
-                                         and int(i.stem.split('_')[-1]) == fps][0]
                         else:
                             raise ValueError("sample_type should be 'num' or 'fps'")
                     except IndexError:
                         raise IndexError("Please make sure you specified input sample num or fps right.")
-                    self.data_pairs.append((temp_rgb, temp_flow, class_dict[sub_dir.stem]))
+                    self.data_pairs.append((temp_rgb, sub_dir.stem))
 
     def __len__(self):
         return len(self.data_pairs)
@@ -89,14 +84,8 @@ class RGBFlowDataset(Dataset):
     def __getitem__(self, idx):
         rgb_data = np.float32(np.load(self.data_pairs[idx][0]))
         self.spacial_transform.refresh_random(rgb_data[0])
-
         rgb_data = self.temporal_transform(rgb_data)
         rgb_data = self.spacial_transform.transform(rgb_data)
-        # print(rgb_data.shape)
         rgb_data = rgb_data.permute(1,0,2,3)
-        flow_data = np.float32(np.load(self.data_pairs[idx][1]))
-        flow_data = self.temporal_transform(flow_data)
-        flow_data = self.spacial_transform.transform(flow_data)
-        flow_data = flow_data.permute(1,0,2,3)
-        # print("Flow: ", flow_data.shape, "Rgb: ", rgb_data.shape, self.data_pairs[idx][0], self.data_pairs[idx][-1])
-        return rgb_data, flow_data, self.data_pairs[idx][2]
+        
+        return rgb_data, self.data_pairs[idx][1]
