@@ -1,10 +1,9 @@
 import numpy as np
 import torch
 from pathlib2 import Path
-from torch.utils.data import Dataset
-from utils.temporal_transforms import *
+from torch.utils.data import Dataset,DataLoader
+from main_src.utils.temporal_transforms import *
 from PIL import Image
-
 import torchvision.transforms.functional as TF
 import torchvision.transforms as transforms
 
@@ -12,35 +11,17 @@ import torchvision.transforms as transforms
 class SpacialTransform(Dataset):
     def __init__(self, output_size=(224, 224)):
         self.output_size = output_size
-
-    def refresh_random(self, image_np):
-        # Random crop
-        self.crop_dim = transforms.RandomCrop.get_params(
-            Image.fromarray(image_np.astype('uint8')), output_size=self.output_size)
-
-        # Random horizontal flipping
-        self.horizontal_flip = False
-        if random.random() > 0.5:
-            self.horizontal_flip = True
-
-        # Random vertical flipping
-        self.vertical_flip = False
-        if random.random() > 0.5:
-            self.vertical_flip = True
+        self.transform = transforms.Compose([
+            transforms.Resize(output_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        ])
 
     def transform(self, image_nps):
         image_PILs = []
-        # Resize
-        # resize = transforms.Resize(size=(520, 520))
-        # image_left = resize(image_left)
-        # image_right = resize(image_right)
-
         for image_np in image_nps:
             image_PIL = Image.fromarray(image_np.astype('uint8'))
-            image_PIL = TF.crop(image_PIL, *self.crop_dim)
-            if self.horizontal_flip: image_PIL = TF.hflip(image_PIL)
-            if self.vertical_flip: image_PIL = TF.vflip(image_PIL)
-            image_PIL = TF.to_tensor(image_PIL)
+            image_PIL = self.transform(image_PIL)
             image_PILs.append(image_PIL)
         return torch.stack(image_PILs)
 
@@ -48,7 +29,7 @@ class SpacialTransform(Dataset):
 class VideoFloderDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, root_dir, sample_rate=1, sample_type="num", fps=5, out_frame_num=32, augment=False):
+    def __init__(self, root_dir, sample_type="num", fps=5, out_frame_num=32):
         """
         Args:
             root_dir (string): Directory with all the video.
@@ -56,19 +37,22 @@ class VideoFloderDataset(Dataset):
         self.root_dir = Path(root_dir)
         self.sub_dirs = [i for i in self.root_dir.iterdir() if i.is_dir() and not i.stem.startswith('.')]
         self.class_names = [i.stem for i in self.sub_dirs]
-        self.data_pairs = []
+        self.labels = []
+        self.datas = []
         self.spacial_transform = SpacialTransform()
         self.temporal_transform = TemporalRandomCrop(out_frame_num)
         self.sample_type = sample_type
-        for sub_dir in self.sub_dirs:
-            item_dirs = [i for i in sub_dir.iterdir() if i.is_dir() and not i.stem.startswith('.')]
-            for item_dir in item_dirs:
-                contents = [i for i in item_dir.iterdir() if i.is_file() and not i.stem.startswith('.')]
+        for label,sub_dir in enumerate(self.sub_dirs):
+            # item_dirs = [i for i in sub_dir.iterdir() if i.is_dir() and not i.stem.startswith('.')]
+            # for item_dir in item_dirs:
+                contents = [i for i in sub_dir.iterdir() if i.is_file() and not i.stem.startswith('.')]
                 if contents:
+                    
                     try:
                         if sample_type == "num":
-                            temp_rgb = [i for i in contents if int(i.stem.split('_')[-1]) == sample_rate][0]
-                          
+                            temp_rgb = [i for i in contents ]
+                            self.labels.extend([label]*len(contents))
+                        
                         elif sample_type == "fps":
                             temp_rgb = [i for i in contents if i.stem.startswith('rgb') and "FPS" in i.stem
                                         and int(i.stem.split('_')[-1]) == fps][0]
@@ -76,16 +60,29 @@ class VideoFloderDataset(Dataset):
                             raise ValueError("sample_type should be 'num' or 'fps'")
                     except IndexError:
                         raise IndexError("Please make sure you specified input sample num or fps right.")
-                    self.data_pairs.append((temp_rgb, sub_dir.stem))
+                    self.datas.extend(temp_rgb)
 
     def __len__(self):
-        return len(self.data_pairs)
+        return len(self.datas)
 
     def __getitem__(self, idx):
-        rgb_data = np.float32(np.load(self.data_pairs[idx][0]))
-        self.spacial_transform.refresh_random(rgb_data[0])
-        rgb_data = self.temporal_transform(rgb_data)
+        rgb_data = np.float32(np.load(self.datas[idx]))
+        # rgb_data = self.temporal_transform(rgb_data)
         rgb_data = self.spacial_transform.transform(rgb_data)
         rgb_data = rgb_data.permute(1,0,2,3)
         
-        return rgb_data, self.data_pairs[idx][1]
+        return rgb_data, self.labels[idx]
+    
+def collate_fn(data):
+    
+    features, labels  = zip(*data)
+    import pdb;pdb.set_trace()
+    return torch.cat(features,dim = 0),labels
+def get_dataloader(data_root,out_frame_num=32):
+    dataset = VideoFloderDataset(data_root,out_frame_num=out_frame_num)
+    return DataLoader(dataset, collate_fn=collate_fn, batch_size=5)
+if __name__ == "__main__":
+    dataloader = get_dataloader(r"D:\phuoc_sign\dataset\raw_data")
+    for image,label  in dataloader:
+        pass
+    

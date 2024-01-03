@@ -2,8 +2,8 @@ import random
 
 import cv2
 import numpy as np
-
-from utils.utils import *
+import os
+from main_src.utils.utils import *
 
 _VIDEO_EXT = ['.avi', '.mp4', '.mov']
 _IMAGE_EXT = ['.jpg', '.png']
@@ -63,9 +63,10 @@ def images_loader(images_path, transform=None):
 
 
 def sample_by_number(frame_num, out_frame_num, random_choice=False):
-    full_frame_lists = split(list(range(frame_num - 1)), out_frame_num)
+    full_frame_lists = split(list(range(frame_num)), out_frame_num)
+
     if random_choice:
-        return [random.choice(i) for i in full_frame_lists]
+            return [random.choice(i) for i in full_frame_lists]
     else:
         return [i[0] for i in full_frame_lists]
 
@@ -109,8 +110,9 @@ class FrameGenerator(object):
 
         if use_fps:
             self.chosen_frames = sample_by_fps(self.frame_num, in_fps, out_fps, random_choice)
+            
         else:
-            self.chosen_frames = sample_by_number(self.frame_num, sample_num + 1, random_choice)
+            self.chosen_frames = sample_by_number(self.frame_num, sample_num, random_choice)
 
     def __len__(self):
         return len(self.chosen_frames)
@@ -125,20 +127,20 @@ class FrameGenerator(object):
 
 
 def get_video_generator(video_path, opts):
-    if opts.out_path is None:
-        out_path = Path(*video_path.parts[:-3], "pre-processed", "train",
-                        video_path.parts[-2], video_path.stem)
-        if not out_path.exists(): out_path.mkdir()
-    else:
-        out_path = Path(opts.out_path)
+    
+    out_path = Path(opts.out_path,
+                        video_path.parts[-2])
+    os.makedirs(out_path,exist_ok=True)
+    if not out_path.exists(): out_path.mkdir()
+    
     out_path_dic = {}
 
     if opts.sample_type == "fps":
-        out_path_dic["flow"] = out_path / ('flow-FPS_{}.npy'.format(opts.out_fps))
-        out_path_dic["rgb"] = out_path / ('rgb-FPS_{}.npy'.format(opts.out_fps))
+        out_path_dic["flow"] = out_path / ('flow-FPS_{}.npy'.format(video_path.stem))
+        out_path_dic["rgb"] = out_path / ('rgb-FPS_{}.npy'.format(video_path.stem))
     elif opts.sample_type == "num":
-        out_path_dic["flow"] = out_path / ('rgb-SampleNum_{}.npy'.format(opts.sample_num))
-        out_path_dic["rgb"] = out_path / ('rgb-SampleNum_{}.npy'.format(opts.sample_num))
+        out_path_dic["flow"] = out_path / ('{}.npy'.format(video_path.stem))
+        out_path_dic["rgb"] = out_path / ('{}.npy'.format(video_path.stem))
     else:
         raise ValueError("At least one of A and B is not None")
 
@@ -149,14 +151,8 @@ def get_video_generator(video_path, opts):
 
 def compute_rgb(video_object, out_path):
     """Compute RGB"""
-    # for i in range(len(video_object) - 1):
-    #     frame = video_object.get_frame()
-    #     # Kind of like the normalization
-    #     frame = (frame / 255.)# * 2 - 1
-    #     rgb.append(frame)
-    # # rgb = rgb[:-1]
-    # rgb = np.float32(np.array(rgb))
-    rgb = np.array(video_object.frames[:-1])
+    
+    rgb = np.array(video_object.frames)[video_object.chosen_frames,:]
     np.save(out_path["rgb"], rgb)
     log('save rgb with shape ', rgb.shape)
     return rgb
@@ -205,25 +201,18 @@ def pre_process(video_path, opts):
         rgb_data = compute_rgb(video_object, out_path_dic)
 
     video_object.reset()
-    with Timer('Compute flow'):
-        log('Extract Flow...')
-        flow_data = compute_flow(video_object, out_path_dic)
-    return rgb_data, flow_data
+    # with Timer('Compute flow'):
+    #     log('Extract Flow...')
+    #     flow_data = compute_flow(video_object, out_path_dic)
+    return rgb_data
 
 
 def mass_process(opts):
-    if opts.is_image:
-        data_root = Path("data/images/")
-    else:
-        data_root = Path("data/videos/")
-    raw_path = data_root / "raw"
-    class_paths = [i for i in raw_path.iterdir() if not i.stem.startswith(".") and i.is_dir()]
+   
+    data_root = Path(opts.data_root)
+    class_paths = [i for i in data_root.iterdir() if not i.stem.startswith(".") and i.is_dir()]
     item_paths = []
     for class_path in class_paths:
-        if opts.is_image:
-            item_paths.extend([i for i in class_path.iterdir()
-                               if not i.stem.startswith(".") and i.is_dir()])
-        else:
             item_paths.extend([i for i in class_path.iterdir()
                                if not i.stem.startswith(".") and i.is_file() and i.suffix.lower() in _VIDEO_EXT])
     for item_path in item_paths:
@@ -239,19 +228,10 @@ def main(opts):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Pre-process the video into formats which i3d uses.')
 
-    # Main action arguments
-    parser.add_argument(
-        '--is_image',
-        action='store_true',
-        help='Use a series of image(its folder) as video input')
     parser.add_argument(
         '--mass',
         action='store_true',
         help='Compute RGBs and Flows massively.')
-    parser.add_argument(
-        '--init_dir',
-        action='store_true',
-        help='Initialize the data pre-processed folder tree.')
     parser.add_argument(
         '--input_path',
         type=str,
@@ -260,13 +240,18 @@ if __name__ == '__main__':
     parser.add_argument(
         '--out_path',
         type=str,
+        default=r"D:\phuoc_sign\dataset\raw_data",
         help='Where you want to save the output rgb and flow files.')
-
+    parser.add_argument(
+        '--data_root',
+        type=str,
+        default=r"D:\phuoc_sign\dataset",
+        help='Where you want to save the output input_folder')
     # Sample arguments
     parser.add_argument(
         '--sample_num',
         type=int,
-        default='16',
+        default='32',
         help='The number of the output frames after the sample, or 1/sample_rate frames will be chosen.')
     parser.add_argument(
         '--in_fps',
@@ -291,23 +276,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--sample_type',
         type=str,
-        default='fps',
+        default='num',
         help="'fps': sample the video to a certain FPS, or 'num': control the number of output video, "
              "choose the video sample method.")
 
     args = parser.parse_args()
 
-    if args.is_image:
-        DATA_ROOT = Path('data/images/')
-    else:
-        DATA_ROOT = Path('data/videos/')
-
-    DATA_DIR = DATA_ROOT / 'raw'
-    SAVE_DIR = DATA_ROOT / 'pre-processed'
-
-    if args.init_dir:
-        build_data_path(args.is_image)
-        exit(0)
+    os.makedirs(args.out_path,exist_ok=True)
     if args.mass:
         mass_process(args)
     else:

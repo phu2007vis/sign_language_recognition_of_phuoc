@@ -163,8 +163,9 @@ class FrameGenerator(object):
 def get_video_generator(video_path, opts):
     if opts.out_path is None:
         out_path = Path(*video_path.parts[:-3], "pre-processed", "train",
-                        video_path.parts[-2], video_path.stem)
-        if not out_path.exists(): out_path.mkdir()
+                        video_path.parts[-2])
+        if not out_path.exists():
+            out_path.mkdir()
     else:
         out_path = Path(opts.out_path)
     out_path_dic = {}
