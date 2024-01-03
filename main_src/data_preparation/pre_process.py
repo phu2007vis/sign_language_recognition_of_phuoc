@@ -136,10 +136,8 @@ def get_video_generator(video_path, opts):
     out_path_dic = {}
 
     if opts.sample_type == "fps":
-        out_path_dic["flow"] = out_path / ('flow-FPS_{}.npy'.format(video_path.stem))
-        out_path_dic["rgb"] = out_path / ('rgb-FPS_{}.npy'.format(video_path.stem))
+        out_path_dic["rgb"] = out_path / ('{}.npy'.format(video_path.stem))
     elif opts.sample_type == "num":
-        out_path_dic["flow"] = out_path / ('{}.npy'.format(video_path.stem))
         out_path_dic["rgb"] = out_path / ('{}.npy'.format(video_path.stem))
     else:
         raise ValueError("At least one of A and B is not None")
@@ -157,40 +155,6 @@ def compute_rgb(video_object, out_path):
     log('save rgb with shape ', rgb.shape)
     return rgb
 
-
-def compute_flow(video_object, out_path):
-    """Compute the TV-L1 optical flow."""
-    flow = []
-
-    bins = np.linspace(-20, 20, num=256)
-    TVL1 = cv2.optflow.DualTVL1OpticalFlow_create()
-    frame1 = video_object.get_frame()
-    prev = cv2.cvtColor(frame1, cv2.COLOR_RGB2GRAY)
-    for i in range(len(video_object) - 1):
-        frame2 = video_object.get_frame()
-        curr = cv2.cvtColor(frame2, cv2.COLOR_RGB2GRAY)
-        curr_flow = TVL1.calc(prev, curr, None)
-        assert (curr_flow.dtype == np.float32)
-
-        # Truncate large motions
-        curr_flow[curr_flow >= 20] = 20
-        curr_flow[curr_flow <= -20] = -20
-
-        # digitize and scale to [-1;1]
-        curr_flow = np.digitize(curr_flow, bins)
-        # curr_flow = (curr_flow / 255.) * 2 - 1
-
-        # Append this flow frame
-        flow.append(curr_flow)
-
-        prev = curr
-
-    flow = np.array(flow)  # np.float32(
-    np.save(out_path["flow"], flow)
-    log("Save flow with shape ", flow.shape)
-    return flow
-
-
 def pre_process(video_path, opts):
     video_path = Path(video_path)
     with Timer('Loading video'):
@@ -201,9 +165,6 @@ def pre_process(video_path, opts):
         rgb_data = compute_rgb(video_object, out_path_dic)
 
     video_object.reset()
-    # with Timer('Compute flow'):
-    #     log('Extract Flow...')
-    #     flow_data = compute_flow(video_object, out_path_dic)
     return rgb_data
 
 
@@ -220,33 +181,18 @@ def mass_process(opts):
             log("Now start processing:", str(item_path))
             pre_process(item_path, opts)
 
-
-def main(opts):
-    pre_process(opts.input_path, opts)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Pre-process the video into formats which i3d uses.')
-
-    parser.add_argument(
-        '--mass',
-        action='store_true',
-        help='Compute RGBs and Flows massively.')
-    parser.add_argument(
-        '--input_path',
-        type=str,
-        default='data/videos/raw/take-out/IMG_6801.mp4',
-        help='Path to input video or images folder')
-    parser.add_argument(
-        '--out_path',
-        type=str,
-        default=r"D:\phuoc_sign\dataset\raw_data",
-        help='Where you want to save the output rgb and flow files.')
     parser.add_argument(
         '--data_root',
         type=str,
         default=r"D:\phuoc_sign\dataset",
         help='Where you want to save the output input_folder')
+    parser.add_argument(
+        '--out_path',
+        type=str,
+        default=r"D:\phuoc_sign\dataset\raw_data",
+        help='Where you want to save the output rgb')
     # Sample arguments
     parser.add_argument(
         '--sample_num',
@@ -281,9 +227,6 @@ if __name__ == '__main__':
              "choose the video sample method.")
 
     args = parser.parse_args()
-
     os.makedirs(args.out_path,exist_ok=True)
-    if args.mass:
-        mass_process(args)
-    else:
-        main(args)
+    mass_process(args)
+

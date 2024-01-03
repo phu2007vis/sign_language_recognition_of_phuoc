@@ -11,18 +11,19 @@ import torchvision.transforms as transforms
 class SpacialTransform(Dataset):
     def __init__(self, output_size=(224, 224)):
         self.output_size = output_size
+        #augument image and normalize it
         self.transform = transforms.Compose([
             transforms.Resize(output_size),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
 
-    def transform(self, image_nps):
+    def transform_fn(self, image_nps):
         image_PILs = []
         for image_np in image_nps:
-            image_PIL = Image.fromarray(image_np.astype('uint8'))
-            image_PIL = self.transform(image_PIL)
-            image_PILs.append(image_PIL)
+                image_PIL = Image.fromarray(image_np.astype('uint8'))
+                image_PIL = self.transform(image_PIL)
+                image_PILs.append(image_PIL)
         return torch.stack(image_PILs)
 
 
@@ -67,22 +68,25 @@ class VideoFloderDataset(Dataset):
 
     def __getitem__(self, idx):
         rgb_data = np.float32(np.load(self.datas[idx]))
-        # rgb_data = self.temporal_transform(rgb_data)
-        rgb_data = self.spacial_transform.transform(rgb_data)
-        rgb_data = rgb_data.permute(1,0,2,3)
-        
-        return rgb_data, self.labels[idx]
+        rgb_data = self.temporal_transform(rgb_data)
+        rgb_data = self.spacial_transform.transform_fn(rgb_data)
+        rgb_data = rgb_data.permute(1,0,2,3).unsqueeze(0)
+        return rgb_data,torch.nn.functional.one_hot(torch.tensor(self.labels[idx]), len(self.class_names)).unsqueeze(0)
     
 def collate_fn(data):
-    
     features, labels  = zip(*data)
-    import pdb;pdb.set_trace()
-    return torch.cat(features,dim = 0),labels
+    features = torch.cat(features,dim = 0)
+    labels = torch.cat(labels,dim = 0)
+    return features,labels
+
 def get_dataloader(data_root,out_frame_num=32):
     dataset = VideoFloderDataset(data_root,out_frame_num=out_frame_num)
-    return DataLoader(dataset, collate_fn=collate_fn, batch_size=5)
+    return DataLoader(dataset, collate_fn=collate_fn, batch_size=4,shuffle = True)
+
 if __name__ == "__main__":
     dataloader = get_dataloader(r"D:\phuoc_sign\dataset\raw_data")
     for image,label  in dataloader:
+        print(image.shape)
+        print(label.shape)
         pass
     
