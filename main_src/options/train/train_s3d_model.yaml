@@ -1,42 +1,39 @@
-# Train GAN-oriented RRDB on our porposed PosNegGT dataset(with both positive and negative GT) with blind degradation settings
-name: SwinIRGAN_PosNegGT_Blind_Pos+Neg_x4
-model_type: Ours_PosNegGT_Model
-
+model_type: S3D_model #can provide any name
+device: cuda # cuda for gpu or cpu 
 datasets:
   train:
-    name: PosNegGT0-20193
-    dataroot_path: data_folder_path
+    name: slovo #can provid any name
+    dataroot_path: D:/phuoc_sign/dataset/raw_data #root_folder have npy file
     # data loader
     num_worker_per_gpu: 8
     batch_size_per_gpu: 8
   val:
-    name: Set5
-    dataroot_path: dataroot_path
-
+    name: slovo
+    dataroot_path: D:/phuoc_sign/dataset/raw_data
 # path
 path:
-  pretrain_network_g: experiments/pretrained_models/SwinIR-GAN/Blind_PSNR/SwinIR_DF2K_OST_Blind_PSNR_x4.pth.pth #path to the pre-trained PSNR oriented model trained on blind degradations
-
+  pretrain_model: ~
 # training settings
 train:
-  lr: !!float 1e-4
+  #use Adam optimizer
+  lr: !!float 1e-4 
   weight_decay: 0
+  total_iter: 300000
 
   scheduler:
     type: MultiStepLR
     milestones: [200000, 250000, 275000, 287500]
     gamma: 0.5
 
-  total_iter: 300000
-  warmup_iter: -1  # no warm up
-
 val:
  val_freq: !!float 5e4
  metrics:
-   psnr: # metric name
-     type: calculate_psnr
-   ssim: # metric name
-     type: calculate_ssim
+    precision: # metric name can provide any name
+     type: calculate_precision
+    f1: # metric name
+     type: calculate_f1
+    recall:
+      type: caculate_recall
 
 # logging settings
 logger:
