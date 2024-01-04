@@ -23,13 +23,6 @@ class BaseModel():
     def optimize_parameters(self):
         pass
 
-    def get_current_visuals(self):
-        pass
-
-    def save(self, epoch):
-        """Save networks and training state."""
-        pass
-
     def validation(self, dataloader:torch.utils.data.DataLoader):
         """Validation function.
 
@@ -37,17 +30,32 @@ class BaseModel():
             dataloader (torch.utils.data.DataLoader): Validation dataloader.
         """
         pass
-    def save_network(self,net,save_path):
-        pass
-    def load_network(self, net, load_path):
-        """Load network.
+    def save_network(self, net, save_path):
+        """
+        Save the PyTorch model to a file.
 
         Args:
-            load_path (str): The path of networks to be loaded.
-            net (nn.Module): Network.
+            net (nn.Module): The PyTorch model to be saved.
+            save_path (str): The file path to save the model.
         """
-        pass
-    
+        torch.save(net.state_dict(), save_path)
+        print(f"Model saved to {save_path}")
+
+    def load_network(self, net, load_path):
+        """
+        Load a PyTorch model from a file.
+
+        Args:
+            net (nn.Module): The PyTorch model to be loaded into.
+            load_path (str): The file path to load the model from.
+        """
+        try:
+            net.load_state_dict(torch.load(load_path))
+            print(f"Model loaded from {load_path}")
+        except FileNotFoundError:
+            print(f"Model file not found at {load_path}")
+        except Exception as e:
+            print(f"Error loading model from {load_path}: {e}")
                 
     def get_optimizer(self, params, lr, **kwargs):
         '''
@@ -55,19 +63,19 @@ class BaseModel():
         '''
         return torch.optim.Adam(params, lr, **kwargs)
 
+
     def setup_schedulers(self):
         """Set up schedulers."""
         train_opt = self.opt['train']
         scheduler_type = train_opt['scheduler'].pop('type')
-        if scheduler_type in ['MultiStepLR', 'MultiStepRestartLR']:
+        
+        scheduler_class = getattr(lr_scheduler, scheduler_type, None)
+        
+        if scheduler_class is not None and callable(scheduler_class):
             for optimizer in self.optimizers:
-                self.schedulers.append(lr_scheduler.MultiStepRestartLR(optimizer, **train_opt['scheduler']))
-        elif scheduler_type == 'CosineAnnealingRestartLR':
-            for optimizer in self.optimizers:
-                self.schedulers.append(lr_scheduler.CosineAnnealingRestartLR(optimizer, **train_opt['scheduler']))
+                self.schedulers.append(scheduler_class(optimizer, **train_opt['scheduler']))
         else:
             raise NotImplementedError(f'Scheduler {scheduler_type} is not implemented yet.')
-        
 
     def _get_init_lr(self):
         """Get the initial lr, which is set by the scheduler.

@@ -1,4 +1,6 @@
 import logging
+import os 
+import os.path as osp
 
 logger = logging.getLogger(__name__)
 def scandir(dir_path, suffix=None, recursive=False, full_path=False):
@@ -41,3 +43,12 @@ def scandir(dir_path, suffix=None, recursive=False, full_path=False):
                     continue
 
     return _scandir(dir_path, suffix=suffix, recursive=recursive)
+
+def read_yaml(file_path):
+    import yaml
+    # Open the YAML file
+    with open(file_path, 'r') as file:
+        # Load the YAML content
+        yaml_data = yaml.safe_load(file)
+    return yaml_data
+

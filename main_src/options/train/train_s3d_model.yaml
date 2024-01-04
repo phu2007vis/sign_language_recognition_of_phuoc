@@ -1,4 +1,4 @@
-model_type: S3D_model #can provide any name
+model_type: S3D #can provide any name
 device: cuda # cuda for gpu or cpu 
 datasets:
   train:
@@ -10,6 +10,11 @@ datasets:
   val:
     name: slovo
     dataroot_path: D:/phuoc_sign/dataset/raw_data
+net:
+  type: S3D_arch
+  num_classes: 500
+  pretrained: True
+  dropout: 0.2
 # path
 path:
   pretrain_model: ~
@@ -21,7 +26,7 @@ train:
   total_iter: 300000
 
   scheduler:
-    type: MultiStepLR
+    type: MultiStepRestartLR
     milestones: [200000, 250000, 275000, 287500]
     gamma: 0.5
 

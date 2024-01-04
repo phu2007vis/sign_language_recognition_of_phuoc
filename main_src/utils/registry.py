@@ -62,7 +62,7 @@ class Registry():
         name = obj.__name__
         self._do_register(name, obj, suffix)
 
-    def get(self, name, suffix='basicsr'):
+    def get(self, name, suffix='phuoc'):
         ret = self._obj_map.get(name)
         if ret is None:
             ret = self._obj_map.get(name + '_' + suffix)
@@ -82,7 +82,7 @@ class Registry():
 
 
 # DATASET_REGISTRY = Registry('dataset')
-# ARCH_REGISTRY = Registry('arch')
+ARCH_REGISTRY = Registry('arch')
 MODEL_REGISTRY = Registry('model')
 # LOSS_REGISTRY = Registry('loss')
-# METRIC_REGISTRY = Registry('metric')
+METRIC_REGISTRY = Registry('metric')
