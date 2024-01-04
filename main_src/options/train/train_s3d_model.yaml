@@ -1,0 +1,46 @@
+# Train GAN-oriented RRDB on our porposed PosNegGT dataset(with both positive and negative GT) with blind degradation settings
+name: SwinIRGAN_PosNegGT_Blind_Pos+Neg_x4
+model_type: Ours_PosNegGT_Model
+
+datasets:
+  train:
+    name: PosNegGT0-20193
+    dataroot_path: data_folder_path
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 8
+  val:
+    name: Set5
+    dataroot_path: dataroot_path
+
+# path
+path:
+  pretrain_network_g: experiments/pretrained_models/SwinIR-GAN/Blind_PSNR/SwinIR_DF2K_OST_Blind_PSNR_x4.pth.pth #path to the pre-trained PSNR oriented model trained on blind degradations
+
+# training settings
+train:
+  lr: !!float 1e-4
+  weight_decay: 0
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [200000, 250000, 275000, 287500]
+    gamma: 0.5
+
+  total_iter: 300000
+  warmup_iter: -1  # no warm up
+
+val:
+ val_freq: !!float 5e4
+ metrics:
+   psnr: # metric name
+     type: calculate_psnr
+   ssim: # metric name
+     type: calculate_ssim
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 5e4
+
+
