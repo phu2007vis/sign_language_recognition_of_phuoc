@@ -17,3 +17,4 @@ __pycache__
 /.idea
 my_project.egg-info
 dataset
+experiments

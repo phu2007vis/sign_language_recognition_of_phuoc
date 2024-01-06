@@ -1,18 +1,18 @@
 model_type: S3D #can provide any name
-device: cuda # cuda for gpu or cpu 
+device: cpu # cuda for gpu or cpu 
 datasets:
   train:
-    name: slovo #can provid any name
-    dataroot_path: D:/phuoc_sign/dataset/raw_data #root_folder have npy file
+    data_root: D:/phuoc_sign/dataset/raw_data #root_folder have npy file
     # data loader
-    num_worker_per_gpu: 8
-    batch_size_per_gpu: 8
+    num_workers: 4
+    batch_size: 8
   val:
-    name: slovo
-    dataroot_path: D:/phuoc_sign/dataset/raw_data
+    data_root: D:/phuoc_sign/dataset/raw_data
+    num_workers: 4
+    batch_size: 8
 net:
   type: S3D_arch
-  num_classes: 500
+  num_classes: 2
   pretrained: True
   dropout: 0.2
 # path
@@ -44,5 +44,6 @@ val:
 logger:
   print_freq: 100
   save_checkpoint_freq: !!float 5e4
+  save_folder: D:/phuoc_sign/experiments/models
 
 

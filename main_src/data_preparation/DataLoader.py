@@ -1,12 +1,12 @@
 import numpy as np
 import torch
 from pathlib2 import Path
-from torch.utils.data import Dataset,DataLoader
+from torch.utils.data import Dataset,DataLoader,WeightedRandomSampler
 from main_src.utils.temporal_transforms import *
 from PIL import Image
 import torchvision.transforms.functional as TF
 import torchvision.transforms as transforms
-
+import os
 
 class SpacialTransform(Dataset):
     def __init__(self, output_size=(224, 224)):
@@ -43,10 +43,12 @@ class VideoFloderDataset(Dataset):
         self.spacial_transform = SpacialTransform()
         self.temporal_transform = TemporalRandomCrop(out_frame_num)
         self.sample_type = sample_type
+        self.class_weights = []
         for label,sub_dir in enumerate(self.sub_dirs):
             # item_dirs = [i for i in sub_dir.iterdir() if i.is_dir() and not i.stem.startswith('.')]
             # for item_dir in item_dirs:
                 contents = [i for i in sub_dir.iterdir() if i.is_file() and not i.stem.startswith('.')]
+                self.class_weights.append(1 / len(contents))
                 if contents:
                     
                     try:
@@ -63,6 +65,7 @@ class VideoFloderDataset(Dataset):
                         raise IndexError("Please make sure you specified input sample num or fps right.")
                     self.datas.extend(temp_rgb)
 
+       
     def __len__(self):
         return len(self.datas)
 
@@ -71,20 +74,29 @@ class VideoFloderDataset(Dataset):
         rgb_data = self.temporal_transform(rgb_data)
         rgb_data = self.spacial_transform.transform_fn(rgb_data)
         rgb_data = rgb_data.permute(1,0,2,3).unsqueeze(0)
-        return rgb_data,torch.nn.functional.one_hot(torch.tensor(self.labels[idx]), len(self.class_names)).unsqueeze(0)
-    
+        return rgb_data,torch.nn.functional.one_hot(torch.tensor(self.labels[idx]), len(self.class_names)).unsqueeze(0).to(torch.float32)
 def collate_fn(data):
     features, labels  = zip(*data)
     features = torch.cat(features,dim = 0)
     labels = torch.cat(labels,dim = 0)
     return features,labels
 
-def get_dataloader(data_root,out_frame_num=32):
+def buid_dataloader(data_root,batch_size = 8,out_frame_num=32,num_workers = 8):
     dataset = VideoFloderDataset(data_root,out_frame_num=out_frame_num)
-    return DataLoader(dataset, collate_fn=collate_fn, batch_size=4,shuffle = True)
+    sample_weights = [0] * len(dataset.datas)
+    print("init weight sampler to avoid imbalance class")
+    for idx, (_, label) in enumerate(dataset):
+            label = torch.argmax(label).item()
+            class_weight =  dataset.class_weights[label]
+            sample_weights[idx] = class_weight
+
+    sampler = WeightedRandomSampler(
+            sample_weights, num_samples=len(sample_weights), replacement=True
+        )
+    return DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,sampler = sampler)
 
 if __name__ == "__main__":
-    dataloader = get_dataloader(r"D:\phuoc_sign\dataset\raw_data")
+    dataloader = buid_dataloader(r"D:\phuoc_sign\dataset\raw_data")
     for image,label  in dataloader:
         print(image.shape)
         print(label.shape)

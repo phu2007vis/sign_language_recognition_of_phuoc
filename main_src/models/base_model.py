@@ -1,10 +1,5 @@
-import os
-import time
 import torch
-from collections import OrderedDict
 from copy import deepcopy
-from torch.nn.parallel import DataParallel, DistributedDataParallel
-
 from main_src.models import lr_scheduler as lr_scheduler
 from main_src.models import logger
 
@@ -19,10 +14,8 @@ class BaseModel():
 
     def feed_data(self, data):
         pass
-
     def optimize_parameters(self):
         pass
-
     def validation(self, dataloader:torch.utils.data.DataLoader):
         """Validation function.
 
@@ -50,7 +43,7 @@ class BaseModel():
             load_path (str): The file path to load the model from.
         """
         try:
-            net.load_state_dict(torch.load(load_path))
+            net.load_state_dict(torch.load(load_path, map_location=torch.device(self.opt['device'])))
             print(f"Model loaded from {load_path}")
         except FileNotFoundError:
             print(f"Model file not found at {load_path}")
@@ -62,7 +55,17 @@ class BaseModel():
         Adam optimizer
         '''
         return torch.optim.Adam(params, lr, **kwargs)
+    def update_learning_rate(self):
+        """Update learning rate.
 
+        Args:
+            current_iter (int): Current iteration.
+            warmup_iter (int)： Warmup iter numbers. -1 for no warmup.
+                Default： -1.
+        """
+        for scheduler in self.schedulers:
+            scheduler.step()
+      
 
     def setup_schedulers(self):
         """Set up schedulers."""
@@ -77,13 +80,6 @@ class BaseModel():
         else:
             raise NotImplementedError(f'Scheduler {scheduler_type} is not implemented yet.')
 
-    def _get_init_lr(self):
-        """Get the initial lr, which is set by the scheduler.
-        """
-        init_lr_groups_l = []
-        for optimizer in self.optimizers:
-            init_lr_groups_l.append([v['initial_lr'] for v in optimizer.param_groups])
-        return init_lr_groups_l
 
  
 
