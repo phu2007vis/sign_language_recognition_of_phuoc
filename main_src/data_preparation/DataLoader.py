@@ -81,19 +81,22 @@ def collate_fn(data):
     labels = torch.cat(labels,dim = 0)
     return features,labels
 
-def buid_dataloader(data_root,batch_size = 8,out_frame_num=32,num_workers = 8):
+def buid_dataloader(data_root,batch_size = 8,out_frame_num=32,num_workers = 8,use_sampler = True):
     dataset = VideoFloderDataset(data_root,out_frame_num=out_frame_num)
-    sample_weights = [0] * len(dataset.datas)
-    print("init weight sampler to avoid imbalance class")
-    for idx, (_, label) in enumerate(dataset):
-            label = torch.argmax(label).item()
-            class_weight =  dataset.class_weights[label]
-            sample_weights[idx] = class_weight
+    if use_sampler :
+        sample_weights = [0] * len(dataset.datas)
+        print("init weight sampler to avoid imbalance class")
+        for idx, (_, label) in enumerate(dataset):
+                label = torch.argmax(label).item()
+                class_weight =  dataset.class_weights[label]
+                sample_weights[idx] = class_weight
 
-    sampler = WeightedRandomSampler(
-            sample_weights, num_samples=len(sample_weights), replacement=True
-        )
-    return DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,sampler = sampler)
+        sampler = WeightedRandomSampler(
+                sample_weights, num_samples=len(sample_weights), replacement=True
+            )
+        return DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,sampler = sampler)
+    else:
+        return  DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers)
 
 if __name__ == "__main__":
     dataloader = buid_dataloader(r"D:\phuoc_sign\dataset\raw_data")

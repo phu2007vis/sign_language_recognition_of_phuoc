@@ -17,7 +17,7 @@ net:
   dropout: 0.2
 # path
 path:
-  pretrain_model: ~
+  pretrain_model: D:/phuoc_sign/experiments/models/iter_1.pth
 # training settings
 train:
   #use Adam optimizer
@@ -31,7 +31,7 @@ train:
     gamma: 0.5
 
 val:
- val_freq: !!float 5e4
+ val_freq: 1
  metrics:
     precision: # metric name can provide any name
      type: calculate_precision
@@ -43,7 +43,7 @@ val:
 # logging settings
 logger:
   print_freq: 100
-  save_checkpoint_freq: !!float 5e4
+  save_checkpoint_freq: 1
   save_folder: D:/phuoc_sign/experiments/models
 
 

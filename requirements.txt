@@ -5,4 +5,5 @@ pathlib2
 argparse
 numpy
 opencv-python
+tqdm
 -e .
