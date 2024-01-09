@@ -41,24 +41,26 @@ def train_pipeline(root_path):
     validation_handler = Validation( opt=opt)
 
     while True:
+        start_epoch+=1
         for inputs, labels in train_loader:
             current_iter += 1
             if current_iter > total_iters:
                 break
 
-            # model.net.train()
-            # # training
-            # train_data = (inputs, labels)
-            # model.feed_data(train_data)
-            # model.optimize_parameters()
-            # model.update_learning_rate()
+            model.net.train()
+            # training
+            train_data = (inputs, labels)
+            model.feed_data(train_data)
+            model.optimize_parameters()
+            model.update_learning_rate()
 
             # log
             if current_iter % opt['logger']['print_freq'] == 0:
                 log_vars = {'epoch': start_epoch, 'iter': current_iter}
-                # log_vars.update({'lrs': model.get_current_learning_rate()})
+                log_vars.update({'lrs': model.get_current_learning_rate()})
                 # log_vars.update(model.get_current_log())
                 # Print your log_vars here
+                logger.info(f"epoch: {start_epoch} iter: {current_iter} loss: {model.loss}")
 
             # save models and training states
             if current_iter % opt['logger']['save_checkpoint_freq'] == 0:
