@@ -1,4 +1,5 @@
 import torch
+import os
 from copy import deepcopy
 from main_src.models import lr_scheduler as lr_scheduler
 from main_src.models import logger
@@ -31,6 +32,8 @@ class BaseModel():
             net (nn.Module): The PyTorch model to be saved.
             save_path (str): The file path to save the model.
         """
+
+        os.makedirs(os.path.dirname(save_path),exist_ok = True)
         torch.save(net.state_dict(), save_path)
         print(f"Model saved to {save_path}")
 

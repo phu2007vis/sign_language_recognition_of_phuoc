@@ -85,4 +85,4 @@ def train_pipeline(root_path):
 
 if __name__ == '__main__':
     root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
-    train_pipeline(r"D:\phuoc_sign\main_src\options\train\train_s3d_model.yaml")
+    train_pipeline(r"/work/21013187/phuoc_sign/sign_language_recognition_of_phuoc/main_src/options/train/train_s3d_model.yaml")

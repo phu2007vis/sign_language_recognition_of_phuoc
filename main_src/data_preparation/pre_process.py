@@ -186,12 +186,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_root',
         type=str,
-        default=r"D:\phuoc_sign\dataset",
+        default=r"/work/21013187/phuoc_sign/small_dataset",
         help='Where you want to save the output input_folder')
     parser.add_argument(
         '--out_path',
         type=str,
-        default=r"D:\phuoc_sign\dataset\raw_data",
+        default=r"/work/21013187/phuoc_sign/dataraw",
         help='Where you want to save the output rgb')
     # Sample arguments
     parser.add_argument(
