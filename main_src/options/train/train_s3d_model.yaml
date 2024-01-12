@@ -2,26 +2,26 @@ model_type: S3D #can provide any name
 device: cuda # cuda for gpu or cpu 
 datasets:
   train:
-    data_root: /work/21013187/phuoc_sign/dataraw #root_folder have npy file
+    data_root: /work/21013187/phuoc_sign/dataraw_train #root_folder have npy file
     # data loader
-    num_workers: 4
+    num_workers: 8
     batch_size: 8
   val:
     data_root: /work/21013187/phuoc_sign/dataraw
-    num_workers: 4
+    num_workers: 8
     batch_size: 8
 net:
   type: S3D_arch
-  num_classes: 2
-  pretrained: False
+  num_classes: 1001
+  pretrained: True
   dropout: 0.2
 # path
 path:
-  pretrain_model: ~
+  pretrain_model: /work/21013187/phuoc_sign/experiments/models/iter_30000.pth
 # training settings
 train:
   #use Adam optimizer
-  lr: !!float 1e-4 
+  lr: !!float 5e-5 
   weight_decay: 0
   total_iter: 300000
 
@@ -31,7 +31,7 @@ train:
     gamma: 0.5
 
 val:
- val_freq: 1
+ val_freq: 10000
  metrics:
     precision: # metric name can provide any name
      type: calculate_precision
@@ -42,8 +42,8 @@ val:
 
 # logging settings
 logger:
-  print_freq: 100
-  save_checkpoint_freq: 1
+  print_freq: 10
+  save_checkpoint_freq: 5000
   save_folder: /work/21013187/phuoc_sign/experiments/models
 
 

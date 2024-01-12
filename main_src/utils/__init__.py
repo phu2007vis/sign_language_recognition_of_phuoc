@@ -1,7 +1,7 @@
 import logging
 import os 
 import os.path as osp
-
+logging.basicConfig(filename  = "logfile.log",level=logging.INFO,format = "%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 def scandir(dir_path, suffix=None, recursive=False, full_path=False):
     """Scan a directory to find the interested files.

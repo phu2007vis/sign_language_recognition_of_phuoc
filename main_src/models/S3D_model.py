@@ -2,6 +2,7 @@ from main_src.utils.registry import MODEL_REGISTRY
 from main_src.models.base_model import BaseModel
 from main_src.architecture_network import build_network
 import torch.nn as nn
+from main_src.utils import logger
 @MODEL_REGISTRY.register()
 class S3D(BaseModel):
     def __init__(self, opt):

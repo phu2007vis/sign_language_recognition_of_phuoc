@@ -1,5 +1,5 @@
 import random
-
+from main_src.utils import logger
 import cv2
 import numpy as np
 import os
@@ -30,7 +30,6 @@ def resize_img(img, short_size=256):
 
 
 def video_loader(video_path, short_size):
-    log("Start processing video:", video_path)
     video = []
     vidcap = cv2.VideoCapture(str(video_path))
     major_ver, *_ = (cv2.__version__).split('.')
@@ -50,7 +49,6 @@ def video_loader(video_path, short_size):
 
 
 def images_loader(images_path, transform=None):
-    log("Start processing Image set:", images_path)
     images_set = []
     images_list = [i for i in images_path.iterdir() if not i.stem.startswith('.') and i.suffix.lower() in _IMAGE_EXT]
     images_list.sort(key=lambda f: int(''.join(filter(str.isdigit, f.stem))))
@@ -108,11 +106,11 @@ class FrameGenerator(object):
         self.current_video_frame = -1
         self.sample_num = sample_num
 
-        if use_fps:
-            self.chosen_frames = sample_by_fps(self.frame_num, in_fps, out_fps, random_choice)
+        # if use_fps:
+         #   self.chosen_frames = sample_by_fps(self.frame_num, in_fps, out_fps, random_choice)
             
-        else:
-            self.chosen_frames = sample_by_number(self.frame_num, sample_num, random_choice)
+        #else:
+        #    self.chosen_frames = sample_by_number(self.frame_num, sample_num, random_choice)
 
     def __len__(self):
         return len(self.chosen_frames)
@@ -147,22 +145,22 @@ def get_video_generator(video_path, opts):
     return video_object, out_path_dic
 
 
-def compute_rgb(video_object, out_path):
+def compute_rgb(video_object, out_path,min_frame = 32):
     """Compute RGB"""
     
-    rgb = np.array(video_object.frames)[video_object.chosen_frames,:]
+    rgb = np.array(video_object.frames)[:,:]
+
+    if rgb.shape[0] < min_frame:
+        logger.info(f"{out_path} not save due to min frame ")
+        print(f"{out_path} not save due to min frame")
+        return 
     np.save(out_path["rgb"], rgb)
-    log('save rgb with shape ', rgb.shape)
     return rgb
 
 def pre_process(video_path, opts):
     video_path = Path(video_path)
-    with Timer('Loading video'):
-        log('Loading video...')
-        video_object, out_path_dic = get_video_generator(video_path, opts)
-    with Timer('Compute RGB'):
-        log('Extract RGB...')
-        rgb_data = compute_rgb(video_object, out_path_dic)
+    video_object, out_path_dic = get_video_generator(video_path, opts)
+    rgb_data = compute_rgb(video_object, out_path_dic)
 
     video_object.reset()
     return rgb_data
@@ -178,7 +176,6 @@ def mass_process(opts):
                                if not i.stem.startswith(".") and i.is_file() and i.suffix.lower() in _VIDEO_EXT])
     for item_path in item_paths:
         with Timer(item_path.name):
-            log("Now start processing:", str(item_path))
             pre_process(item_path, opts)
 
 if __name__ == '__main__':
@@ -186,12 +183,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_root',
         type=str,
-        default=r"/work/21013187/phuoc_sign/small_dataset",
+        default=r"/work/21013187/phuoc_sign/dataset/train",
         help='Where you want to save the output input_folder')
     parser.add_argument(
         '--out_path',
         type=str,
-        default=r"/work/21013187/phuoc_sign/dataraw",
+        default=r"/work/21013187/phuoc_sign/dataraw_train",
         help='Where you want to save the output rgb')
     # Sample arguments
     parser.add_argument(

@@ -7,6 +7,7 @@ from PIL import Image
 import torchvision.transforms.functional as TF
 import torchvision.transforms as transforms
 import os
+from main_src.utils import *
 
 class SpacialTransform(Dataset):
     def __init__(self, output_size=(224, 224)):
@@ -15,7 +16,6 @@ class SpacialTransform(Dataset):
         self.transform = transforms.Compose([
             transforms.Resize(output_size),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
 
     def transform_fn(self, image_nps):
@@ -44,11 +44,16 @@ class VideoFloderDataset(Dataset):
         self.temporal_transform = TemporalRandomCrop(out_frame_num)
         self.sample_type = sample_type
         self.class_weights = []
+        logger.info("init data set")
         for label,sub_dir in enumerate(self.sub_dirs):
             # item_dirs = [i for i in sub_dir.iterdir() if i.is_dir() and not i.stem.startswith('.')]
             # for item_dir in item_dirs:
                 contents = [i for i in sub_dir.iterdir() if i.is_file() and not i.stem.startswith('.')]
-                self.class_weights.append(1 / len(contents))
+                if len(contents)==0:
+                    self.class_weights.append(0)
+                else:
+                    self.class_weights.append(1 / len(contents))
+
                 if contents:
                     
                     try:
@@ -85,7 +90,7 @@ def buid_dataloader(data_root,batch_size = 8,out_frame_num=32,num_workers = 8,us
     dataset = VideoFloderDataset(data_root,out_frame_num=out_frame_num)
     if use_sampler :
         sample_weights = [0] * len(dataset.datas)
-        print("init weight sampler to avoid imbalance class")
+        logger.info("init weight sampler to avoid imbalance class")
         for idx, (_, label) in enumerate(dataset):
                 label = torch.argmax(label).item()
                 class_weight =  dataset.class_weights[label]
@@ -96,12 +101,14 @@ def buid_dataloader(data_root,batch_size = 8,out_frame_num=32,num_workers = 8,us
             )
         return DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,sampler = sampler)
     else:
-        return  DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers)
+        return  DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,shuffle = True)
+
 
 if __name__ == "__main__":
-    dataloader = buid_dataloader(r"D:\phuoc_sign\dataset\raw_data")
-    for image,label  in dataloader:
-        print(image.shape)
-        print(label.shape)
-        pass
-    
+    import torch
+    import numpy as np
+    import cv2
+    for i in range(5):
+        dataloader = buid_dataloader(r"/work/21013187/phuoc_sign/dataraw")
+        for image,label  in dataloader:
+            pass 

@@ -19,3 +19,5 @@ my_project.egg-info
 dataset
 experiments
 train*
+slu*
+*.log
