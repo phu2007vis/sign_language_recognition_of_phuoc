@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 import torch
 from pathlib2 import Path
 from torch.utils.data import Dataset,DataLoader,WeightedRandomSampler
@@ -21,7 +22,7 @@ class SpacialTransform(Dataset):
     def transform_fn(self, image_nps):
         image_PILs = []
         for image_np in image_nps:
-                image_PIL = Image.fromarray(image_np.astype('uint8'))
+                image_PIL = Image.fromarray(cv2.cvtColor(image_np.astype('uint8'),cv2.COLOR_BGR2RGB))
                 image_PIL = self.transform(image_PIL)
                 image_PILs.append(image_PIL)
         return torch.stack(image_PILs)
@@ -30,7 +31,7 @@ class SpacialTransform(Dataset):
 class VideoFloderDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, root_dir, sample_type="num", fps=5, out_frame_num=32):
+    def __init__(self, root_dir, sample_type="num", fps=5, out_frame_num=32,save_class_name = None):
         """
         Args:
             root_dir (string): Directory with all the video.
@@ -69,8 +70,12 @@ class VideoFloderDataset(Dataset):
                     except IndexError:
                         raise IndexError("Please make sure you specified input sample num or fps right.")
                     self.datas.extend(temp_rgb)
-
-       
+        if save_class_name != None:
+           import pandas as pd
+           os.makedirs(os.path.dirname(save_class_name),exist_ok = True)
+           my_class_name = pd.Series(self.class_names)
+           my_class_name.to_csv(save_class_name, index=False)
+           print("save class name file at: ",save_class_name)
     def __len__(self):
         return len(self.datas)
 
@@ -86,8 +91,8 @@ def collate_fn(data):
     labels = torch.cat(labels,dim = 0)
     return features,labels
 
-def buid_dataloader(data_root,batch_size = 8,out_frame_num=32,num_workers = 8,use_sampler = True):
-    dataset = VideoFloderDataset(data_root,out_frame_num=out_frame_num)
+def buid_dataloader(data_root,batch_size = 8,out_frame_num=32,num_workers = 8,use_sampler = True,save_class_name = None):
+    dataset = VideoFloderDataset(data_root,out_frame_num=out_frame_num,save_class_name = save_class_name)
     if use_sampler :
         sample_weights = [0] * len(dataset.datas)
         logger.info("init weight sampler to avoid imbalance class")
@@ -109,6 +114,9 @@ if __name__ == "__main__":
     import numpy as np
     import cv2
     for i in range(5):
-        dataloader = buid_dataloader(r"/work/21013187/phuoc_sign/dataraw")
+        dataloader = buid_dataloader(r"/work/21013187/phuoc_sign/dataraw",use_sampler = False)
         for image,label  in dataloader:
+            im = np.asarray(image[0].permute(1,2,3,0)[0]*255.0,dtype = np.uint8)
+            import pdb;pdb.set_trace()
+
             pass 

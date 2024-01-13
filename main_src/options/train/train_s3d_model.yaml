@@ -6,24 +6,29 @@ datasets:
     # data loader
     num_workers: 8
     batch_size: 8
+    use_sampler: True
+    save_class_name: /work/21013187/phuoc_sign/experiments/class_name.csv
   val:
     data_root: /work/21013187/phuoc_sign/dataraw
     num_workers: 8
     batch_size: 8
+    use_sampler: True
+
 net:
   type: S3D_arch
   num_classes: 1001
   pretrained: True
   dropout: 0.2
+
 # path
 path:
-  pretrain_model: /work/21013187/phuoc_sign/experiments/models/iter_30000.pth
+  pretrain_model: /work/21013187/phuoc_sign/experiments/models/iter_5000.pth
 # training settings
 train:
   #use Adam optimizer
-  lr: !!float 5e-5 
+  lr: !!float 2e-5 
   weight_decay: 0
-  total_iter: 300000
+  total_iter: 30000
 
   scheduler:
     type: MultiStepRestartLR
@@ -31,7 +36,7 @@ train:
     gamma: 0.5
 
 val:
- val_freq: 10000
+ val_freq: 1000
  metrics:
     precision: # metric name can provide any name
      type: calculate_precision
@@ -43,7 +48,7 @@ val:
 # logging settings
 logger:
   print_freq: 10
-  save_checkpoint_freq: 5000
-  save_folder: /work/21013187/phuoc_sign/experiments/models
+  save_checkpoint_freq: 500
+  save_folder: /work/21013187/phuoc_sign/experiments/models2
 
 

@@ -13,9 +13,9 @@ def create_train_val_dataloader(opt):
     train_loader, val_loader = None, []
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':       
-            train_loader = buid_dataloader(use_sampler = True,**dataset_opt)     
+            train_loader = buid_dataloader(**dataset_opt)     
         elif phase == 'val':
-            val_loader = buid_dataloader(use_sampler= False,**dataset_opt)
+            val_loader = buid_dataloader(**dataset_opt)
         else:
             raise ValueError(f'Dataset phase {phase} is not recognized.')
     return train_loader, val_loader
