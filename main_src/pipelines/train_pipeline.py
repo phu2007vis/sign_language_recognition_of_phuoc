@@ -13,7 +13,8 @@ def create_train_val_dataloader(opt):
     train_loader, val_loader = None, []
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':       
-            train_loader = buid_dataloader(**dataset_opt)     
+            dataset,train_loader = buid_dataloader(**dataset_opt)   
+            import pdb;pdb.set_trace()  
         elif phase == 'val':
             val_loader = buid_dataloader(**dataset_opt)
         else:
@@ -94,4 +95,4 @@ def train_pipeline(root_path):
 
 if __name__ == '__main__':
     root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
-    train_pipeline(r"/work/21013187/phuoc_sign/sign_language_recognition_of_phuoc/main_src/options/train/train_s3d_model.yaml")
+    train_pipeline(r"D:\phuoc_sign\main_src\options\train\window_train.yaml")
