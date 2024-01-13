@@ -124,9 +124,9 @@ def buid_dataloader(data_root,batch_size = 8,out_frame_num=32,num_workers = 8,us
         sampler = WeightedRandomSampler(
                 sample_weights, num_samples=len(sample_weights), replacement=True
             )
-        return DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,sampler = sampler),dataset
+        return DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,sampler = sampler)
     else:
-        return  DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,shuffle = True),dataset
+        return  DataLoader(dataset, collate_fn=collate_fn, batch_size=batch_size,num_workers = num_workers,shuffle = True)
 
 
 if __name__ == "__main__":

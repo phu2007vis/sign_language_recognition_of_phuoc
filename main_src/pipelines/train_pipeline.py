@@ -13,7 +13,7 @@ def create_train_val_dataloader(opt):
     train_loader, val_loader = None, []
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':       
-            dataset,train_loader = buid_dataloader(**dataset_opt)   
+            train_loader = buid_dataloader(**dataset_opt)   
             import pdb;pdb.set_trace()  
         elif phase == 'val':
             val_loader = buid_dataloader(**dataset_opt)

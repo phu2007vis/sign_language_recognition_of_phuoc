@@ -8,6 +8,20 @@ datasets:
     batch_size: 8
     use_sampler: True
     save_class_name: /work/21013187/phuoc_sign/experiments/class_name.csv
+    augument: 
+      rotation: 13 #(-n to n)
+      color: 
+        - 0.2 #brightness
+        - 0.2 # contrast 
+        - 0.2 #saturation
+        - 0.2 #hue
+      h_flip: 0.5 #hori flip
+      translate:
+        max_x: 0.2
+        max_y: 0.2
+      gausian_noise:
+        mean: 0
+        std: 25
   val:
     data_root: /work/21013187/phuoc_sign/dataraw
     num_workers: 8
