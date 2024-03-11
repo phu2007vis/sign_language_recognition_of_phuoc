@@ -10,11 +10,15 @@ import torchvision.transforms as transforms
 import os
 from main_src.utils import *
 import random
+import numpy as np
+
 class SpacialTransform(Dataset):
     def __init__(self, output_size=(224, 224),augument = None):
         self.output_size = output_size
         self.augument = augument
         self.transform_list = []
+        self.h_flip = None
+        self.rotate_angle = None
         if self.augument is not None:
             if self.augument.get('color') is not None:
                 self.transform_list.append(transforms.ColorJitter(*augument['color']))
@@ -29,7 +33,8 @@ class SpacialTransform(Dataset):
             if self.augument.get("rotation") is not None:   
                 self.rotate_angle = random.uniform(-self.augument['rotation'],self.augument['rotation'])   
     def image_augument(self,image:np.array):
-        if self.augument.get('gausian_noise') is not None:
+        
+        if self.augument is not None and self.augument.get('gausian_noise') is not None:
             noise = np.random.normal(self.augument['gausian_noise']['mean'] , self.augument['gausian_noise']['std'], image.shape)
             image = np.clip(image + noise, 0, 255).astype(np.uint8)
         image = Image.fromarray(image)
@@ -99,7 +104,6 @@ class VideoFloderDataset(Dataset):
         return len(self.datas)
 
     def __getitem__(self, idx):
-        print(self.datas[idx])
         rgb_data = np.float32(np.load(self.datas[idx]))
         rgb_data = self.temporal_transform(rgb_data)
         rgb_data = self.spacial_transform.transform_fn(rgb_data)
@@ -136,7 +140,5 @@ if __name__ == "__main__":
     for i in range(5):
         dataloader = buid_dataloader(r"/work/21013187/phuoc_sign/dataraw",use_sampler = False)
         for image,label  in dataloader:
-            im = np.asarray(image[0].permute(1,2,3,0)[0]*255.0,dtype = np.uint8)
             import pdb;pdb.set_trace()
 
-            pass 

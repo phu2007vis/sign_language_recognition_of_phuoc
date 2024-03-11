@@ -106,11 +106,6 @@ class FrameGenerator(object):
         self.current_video_frame = -1
         self.sample_num = sample_num
 
-        # if use_fps:
-         #   self.chosen_frames = sample_by_fps(self.frame_num, in_fps, out_fps, random_choice)
-            
-        #else:
-        #    self.chosen_frames = sample_by_number(self.frame_num, sample_num, random_choice)
 
     def __len__(self):
         return len(self.chosen_frames)
@@ -150,7 +145,7 @@ def compute_rgb(video_object, out_path,min_frame = 32):
     
     rgb = np.array(video_object.frames)[:,:]
 
-    if rgb.shape[0] < min_frame:
+    if False: #if rgb.shape[0] < min_frame:
         logger.info(f"{out_path} not save due to min frame ")
         print(f"{out_path} not save due to min frame")
         return 
@@ -183,12 +178,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--data_root',
         type=str,
-        default=r"D:\phuoc_sign\dataset\raw_data",
+        default=r"/work/21013187/phuoc_sign/pose_heatmap/output_folder_test_image",
         help='Where you want to save the output input_folder')
     parser.add_argument(
         '--out_path',
         type=str,
-        default=r"D:\phuoc_sign\dataset\raw_data2",
+        default=r"/work/21013187/phuoc_sign/dataset/heatmap_input_test_raw",
         help='Where you want to save the output rgb')
     # Sample arguments
     parser.add_argument(

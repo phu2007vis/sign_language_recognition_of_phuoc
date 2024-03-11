@@ -2,6 +2,22 @@ import random
 import math
 import numpy as np
 
+class Upframe:
+    def __init__(self,min_frame = 32):
+        self.min_frame = min_frame
+    def expand_video(self,video):
+        num_frame_in = video.shape[0]
+        if num_frame_in < self.min_frame:
+            return video
+
+    # Choose additional frames randomly to meet the min_frame requirement
+        indices_chosen = list(np.random.randint(0, num_frame_in, self.min_frame - num_frame_in))
+        indices_chosen.extend(range(num_frame_in))
+        indices_chosen = sorted(indices_chosen)
+
+    # Return the expanded video
+        return np.float32([video[i] for i in indices_chosen])
+
 
 class LoopPadding(object):
 
@@ -90,6 +106,7 @@ class TemporalRandomCrop(object):
 
     def __init__(self, size):
         self.size = size
+        self.upframe = Upframe(size)
 
     def __call__(self, frames):
         """
@@ -98,6 +115,8 @@ class TemporalRandomCrop(object):
         Returns:
             list: Cropped frame indices.
         """
+        if len(frames) < self.size:
+            frames = self.upframe.expand_video(frames)
         frame_indices = list(range(frames.shape[0]))
         rand_end = max(0, frames.shape[0] - self.size - 1)
         begin_index = random.randint(0, rand_end)

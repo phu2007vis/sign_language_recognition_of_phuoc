@@ -2,41 +2,32 @@ model_type: S3D #can provide any name
 device: cuda # cuda for gpu or cpu 
 datasets:
   train:
-    data_root: /work/21013187/phuoc_sign/dataraw_train #root_folder have npy file
-    # data loader
+    data_root:   /work/21013187/phuoc_sign/dataset/heatmap_input_train_raw  # data loader
     num_workers: 8
     batch_size: 8
-    use_sampler: True
-    save_class_name: /work/21013187/phuoc_sign/experiments/class_name.csv
-    augument: 
-      rotation: 13 #(-n to n)
-      color: 
-        - 0.2 #brightness
-        - 0.2 # contrast 
-        - 0.2 #saturation
-        - 0.2 #hue
-      h_flip: 0.5 #hori flip
+    save_class_name: /work/21013187/phuoc_sign/experiments/heatmap_label.csv
+    use_sampler: False
+    augument:
+      rotation: 10 #(-n to n)
       translate:
-        max_x: 0.2
-        max_y: 0.2
-      gausian_noise:
-        mean: 0
-        std: 25
+        max_x: 0.1
+        max_y: 0.1
   val:
-    data_root: /work/21013187/phuoc_sign/dataraw
+    data_root: /work/21013187/phuoc_sign/dataset/heatmap_input_train_raw
     num_workers: 8
     batch_size: 8
-    use_sampler: True
+    use_sampler: False
 
 net:
   type: S3D_arch
-  num_classes: 1001
+  num_classes: 20
   pretrained: True
   dropout: 0.2
+  freezing_layer: 1
 
 # path
 path:
-  pretrain_model: /work/21013187/phuoc_sign/experiments/models/iter_5000.pth
+  pretrain_model: "/work/21013187/phuoc_sign/experiments/19_action__model/iter_1660.pth"
 # training settings
 train:
   #use Adam optimizer
@@ -50,7 +41,7 @@ train:
     gamma: 0.5
 
 val:
- val_freq: 1000
+ val_freq: 5
  metrics:
     precision: # metric name can provide any name
      type: calculate_precision
@@ -61,8 +52,8 @@ val:
 
 # logging settings
 logger:
-  print_freq: 10
-  save_checkpoint_freq: 500
-  save_folder: /work/21013187/phuoc_sign/experiments/models2
+  print_freq: 1
+  save_checkpoint_freq: 100
+  save_folder: /work/21013187/phuoc_sign/experiments/19_action__model
 
 

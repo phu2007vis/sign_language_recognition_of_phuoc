@@ -14,12 +14,14 @@ def create_train_val_dataloader(opt):
     for phase, dataset_opt in opt['datasets'].items():
         if phase == 'train':       
             train_loader = buid_dataloader(**dataset_opt)   
-            import pdb;pdb.set_trace()  
         elif phase == 'val':
             val_loader = buid_dataloader(**dataset_opt)
         else:
             raise ValueError(f'Dataset phase {phase} is not recognized.')
     return train_loader, val_loader
+
+train_loss_average_file = "/work/21013187/phuoc_sign/sign_language_recognition_of_phuoc/train_loss.txt"
+test_loss_average_file = "/work/21013187/phuoc_sign/sign_language_recognition_of_phuoc/test_loss.txt"
 
 def train_pipeline(root_path):
     # parse options, set distributed setting, set random seed
@@ -48,6 +50,9 @@ def train_pipeline(root_path):
 
     while True:
         start_epoch+=1
+        if current_iter > total_iters:
+                break
+
         for inputs, labels in train_loader:
             current_iter += 1
             if current_iter > total_iters:
@@ -67,6 +72,8 @@ def train_pipeline(root_path):
                 print(f"Iter: {current_iter} loss: {model.loss}")
                 logger.info(f"Iter: {current_iter} loss: {model.loss}")
 
+            with open("train_loss_average_file","a") as f:
+                f.write(str(model.loss.item())+"\n")
             # save models and training states
             if current_iter % opt['logger']['save_checkpoint_freq'] == 0:
                 path = os.path.join(model.opt['logger']['save_folder'], f"iter_{current_iter}.pth")
@@ -77,10 +84,24 @@ def train_pipeline(root_path):
             # validation
             if opt.get('val') is not None and (current_iter % opt['val']['val_freq'] == 0):
                 precision, recall, f1, average_loss,accuracy = validation_handler.validate(model.net, val_loader, model.loss_fn)
+                with open("precision__file.txt","a") as f:
+                    f.write(str(current_iter)+" ")
+                    for i in range(precision.shape[0]):
+                        f.write(str(precision[i])+" ")
+                    f.write("\n")
+
+                with open("recal__file","a") as f:
+                    f.write(str(current_iter)+" ")
+                    for i in range(recall.shape[0]):
+                        f.write(str(recall[i])+" ")
+                    f.write("\n")
+                with open("test_loss_average_file","a") as f:
+                    f.write(str(average_loss)+"\n")
                 logger.info("validate")
-                logger.info(f"average_loss: {average_loss} , accuracy: {accuracy} in validate set")
+                logger.info(f"iter : {current_iter} , average_loss: {average_loss} , accuracy: {accuracy} in validate set")
                 print("validate")
                 print("average_loss: {average_loss}")
+
                 # Log or save the validation metrics as needed
 
     # Save models and training states at the end of training
@@ -95,4 +116,4 @@ def train_pipeline(root_path):
 
 if __name__ == '__main__':
     root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
-    train_pipeline(r"D:\phuoc_sign\main_src\options\train\window_train.yaml")
+    train_pipeline(r"/work/21013187/phuoc_sign/sign_language_recognition_of_phuoc/main_src/options/train/train_s3d_model.yaml")
